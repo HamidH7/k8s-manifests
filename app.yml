@@ -2,8 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: my-web-app
+  labels:
+    app: my-web-app
 spec:
-  replicas: 5
+  replicas: 3
   selector:
     matchLabels:
       app: my-web-app
@@ -27,5 +29,29 @@ spec:
   ports:
   - port: 80
     targetPort: 80
+    protocol: TCP
   selector:
     app: my-web-app
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-web-app-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: "selfsigned-issuer"
+spec:
+  tls:
+  - hosts:
+    - app.local
+    secretName: app-local-tls
+  rules:
+  - host: app.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: my-web-app
+            port:
+              number: 80
